@@ -5,7 +5,6 @@ using System.Reflection;
 [HarmonyPatch]
 public class ComputerIntrinsicsPatch
 {
-
     [HarmonyPatch(typeof(ComputerIntrinsics), "AddInstrinsics")]
     class AddInstrinsicsPatch
     {
