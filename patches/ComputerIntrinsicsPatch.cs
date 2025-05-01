@@ -1,41 +1,43 @@
 ﻿using HarmonyLib;
 using Miniscript;
-using NetworkMessages;
-using System.Collections.Generic;
 using System.Reflection;
 
 [HarmonyPatch]
-class ComputerIntrinsicsPatch
+public class ComputerIntrinsicsPatch
 {
-    private static bool intrinsicsAdded;
 
     [HarmonyPatch(typeof(ComputerIntrinsics), "AddInstrinsics")]
-    static void Postfix()
+    class AddInstrinsicsPatch
     {
-        if (intrinsicsAdded == true)
-            return;
-        intrinsicsAdded = true;
-        Intrinsic intrinsic1 = Intrinsic.Create("get_type");
-        intrinsic1.AddParam("self");
-        intrinsic1.code = delegate(TAC.Context context, Intrinsic.Result partialResult)
+        private static bool intrinsicsAdded;
+
+        static void Postfix()
         {
-            GreyMap greyMap = context.GetVar("self") as GreyMap;
-            if (greyMap != null)
+            if (intrinsicsAdded == true)
+                return;
+            intrinsicsAdded = true;
+            Intrinsic intrinsic1 = Intrinsic.Create("get_type");
+            intrinsic1.AddParam("self");
+            intrinsic1.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
             {
-                GreyInterpreter greyInterpreter = (GreyInterpreter)context.interpreter;
-                var computer = greyInterpreter.hostData.GetComputer(greyMap).GetComputer();
-                if (computer != null)
+                GreyMap greyMap = context.GetVar("self") as GreyMap;
+                if (greyMap != null)
                 {
-                    FieldInfo devInfo = AccessTools.Field(typeof(Computer), "typeDevice");
-                    var devOut = devInfo.GetValue(computer);
-                    if (devOut != null)
+                    GreyInterpreter greyInterpreter = (GreyInterpreter)context.interpreter;
+                    var computer = greyInterpreter.hostData.GetComputer(greyMap).GetComputer();
+                    if (computer != null)
                     {
-                        NetworkLan.TypeDevice typeDevice = (NetworkLan.TypeDevice)devOut;
-                        return new Intrinsic.Result(typeDevice.ToString().ToLower());
+                        FieldInfo devInfo = AccessTools.Field(typeof(Computer), "typeDevice");
+                        var devOut = devInfo.GetValue(computer);
+                        if (devOut != null)
+                        {
+                            NetworkLan.TypeDevice typeDevice = (NetworkLan.TypeDevice)devOut;
+                            return new Intrinsic.Result(typeDevice.ToString().ToLower());
+                        }
                     }
                 }
-            }
-            return Intrinsic.Result.Null;
-        };
+                return Intrinsic.Result.Null;
+            };
+        }
     }
 }
